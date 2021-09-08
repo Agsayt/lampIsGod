@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,10 +71,18 @@ public class MainActivity extends AppCompatActivity {
         FillGrid(gridWidth,gridWidth);
 
 
+        try {
+            socket = new DatagramSocket(null);
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
 
-        WebView webView = findViewById(R.id.webView);
+        WebView webView = new WebView(this);
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadUrl("http://192.168.0.1/webpages/login.html?t=1609243010889");
+        webView.loadUrl("http://node00.ddns.net:8080/flow/recv.html");
+        webView.setInitialScale(500);
+
+        mainLay.addView(webView);
     }
 
     private void FillGrid(int width, int height) {
@@ -142,23 +151,23 @@ public class MainActivity extends AppCompatActivity {
 
     public void OnViewResult(View v)
     {
-        Thread secondaryThread = new Thread(new Runnable() {
+        Runnable run = new Runnable() {
             @Override
             public void run() {
                 byte[] message = new byte[1];
 
                 try{
                     address = InetAddress.getByName(destinationAddress);
-                    socket = new DatagramSocket(null);
                     message[0] = 0;
                     packet = new DatagramPacket(message, message.length, address, destinationPort);
                     socket.send(packet);
                 }
-                catch (Exception e) {return;}
+                catch (Exception e) { }
             }
-        });
+        };
 
-        secondaryThread.run();
+        Thread secondaryThread = new Thread(run);
+        secondaryThread.start();
     }
 
 
@@ -369,8 +378,6 @@ public class MainActivity extends AppCompatActivity {
                 dlg.cancel();
             }
         });
-
-
     }
 
     private void PacketForming(View v, int red, int green, int blue) {
@@ -378,7 +385,7 @@ public class MainActivity extends AppCompatActivity {
         b.setBackgroundColor(Color.rgb(red,green,blue));
         if (!IsAnimation)
         {
-            Thread secondaryThread = new Thread(new Runnable() {
+            Runnable run = new Runnable() {
                 @Override
                 public void run() {
                     Button b = (Button)v;
@@ -387,10 +394,9 @@ public class MainActivity extends AppCompatActivity {
 
                     try{
                         address = InetAddress.getByName(destinationAddress);
-                        socket = new DatagramSocket(null);
 
                         message[0] = 2;
-                        message[1] = (byte)b.getTag();
+                        message[1] = (byte)Integer.parseInt(b.getTag().toString());
                         message[2] = (byte)red; //R
                         message[3] = (byte)green; //G
                         message[4] = (byte)blue;
@@ -399,9 +405,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                     catch (Exception e) {return;}
                 }
-            });
+            };
 
-            secondaryThread.run();
+            Thread secondaryThread = new Thread(run);
+            secondaryThread.start();
         }
         else
         {
