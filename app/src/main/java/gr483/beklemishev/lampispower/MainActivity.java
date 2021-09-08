@@ -10,12 +10,15 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.ColorDrawable;
 import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
@@ -65,6 +68,12 @@ public class MainActivity extends AppCompatActivity {
         mainLay.addView(gl);
 
         FillGrid(gridWidth,gridWidth);
+
+
+
+        WebView webView = findViewById(R.id.webView);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.loadUrl("http://192.168.0.1/webpages/login.html?t=1609243010889");
     }
 
     private void FillGrid(int width, int height) {
@@ -330,19 +339,19 @@ public class MainActivity extends AppCompatActivity {
         blue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                previewColor.setBackgroundColor(Color.rgb(red.getProgress(), blue.getProgress(), seekBar.getProgress()));
+                previewColor.setBackgroundColor(Color.rgb(red.getProgress(), green.getProgress(), seekBar.getProgress()));
                 etBlue.setText(String.valueOf(seekBar.getProgress()));
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                previewColor.setBackgroundColor(Color.rgb(red.getProgress(), blue.getProgress(), seekBar.getProgress()));
+                previewColor.setBackgroundColor(Color.rgb(red.getProgress(), green.getProgress(), seekBar.getProgress()));
                 etBlue.setText(String.valueOf(seekBar.getProgress()));
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                previewColor.setBackgroundColor(Color.rgb(red.getProgress(), blue.getProgress(), seekBar.getProgress()));
+                previewColor.setBackgroundColor(Color.rgb(red.getProgress(), green.getProgress(), seekBar.getProgress()));
                 etBlue.setText(String.valueOf(seekBar.getProgress()));
             }
         });
