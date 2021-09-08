@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">lampIsPower</string>
+    <string name="ValueHint">Введите целое число</string>
+    <string name="currentTag">Текущий тег:</string>
+    <string name="Accept">Принять</string>
+    <string name="Cancel">Отмена</string>
+    <string name="Red">R</string>
+    <string name="Green">G</string>
+    <string name="Blue">B</string>
+    <string name="ColorPreview">Предпросмотр цвета</string>
+    <string name="Settings">Настройки</string>
+    <string name="DestinationAddress">Адресс назначения:</string>
+    <string name="DestinationPort">Порт:</string>
+    <string name="ViewSendedPackets">Отобразить</string>
+    <string name="SizesOfGrid">Размеры сетки:</string>
+    <string name="Width">Ширина</string>
+    <string name="Height">Высота</string>
+</resources>
