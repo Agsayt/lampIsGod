@@ -16,7 +16,9 @@ public class DataBaseClass extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE GridLayouts (id INT, text TXT);";
+        String sql = "CREATE TABLE GridLayouts (id INT, tags INT, text TXT);";
+        db.execSQL(sql);
+        sql = "CREATE TABLE NetworkSettins (id INT, title TXT, address TXT, port, INT);";
         db.execSQL(sql);
     }
 
@@ -63,14 +65,14 @@ public class DataBaseClass extends SQLiteOpenHelper {
 //        return "";
 //    }
 
-    public void getAllNotes(ArrayList<GridLayout> lst)
+    public void getAllNotes(ArrayList<GridLayoutSave> lst)
     {
         SQLiteDatabase db = getReadableDatabase();
         String sql = "SELECT id, savedLayout, text FROM GridLayouts;";
         Cursor cur = db.rawQuery(sql,null);
         if(cur.moveToFirst() == true){
             do {
-                GridLayout n = new GridLayout();
+                GridLayoutSave n = new GridLayoutSave();
                 n.id = cur.getInt(0);
 //                n.savedlayout = cur.getString(1);
                 n.Name = cur.getString(2);

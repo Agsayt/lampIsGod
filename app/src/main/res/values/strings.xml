@@ -15,4 +15,5 @@
     <string name="SizesOfGrid">Размеры сетки:</string>
     <string name="Width">Ширина</string>
     <string name="Height">Высота</string>
+    <string name="Presets">Presets</string>
 </resources>

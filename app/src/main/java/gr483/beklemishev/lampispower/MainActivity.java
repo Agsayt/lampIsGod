@@ -1,6 +1,7 @@
 package gr483.beklemishev.lampispower;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -14,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -63,10 +65,8 @@ public class MainActivity extends AppCompatActivity {
         gl.setColumnCount(gridWidth);
         gl.setRowCount(gridHeight);
         gl.setUseDefaultMargins(true);
-        gl.setAlignmentMode(GridLayout.ALIGN_BOUNDS);
 
         mainLay = findViewById(R.id.mainLayout);
-        mainLay.addView(gl);
 
         FillGrid(gridWidth,gridWidth);
 
@@ -77,11 +77,27 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        Button ViewResult = new Button(this);
+        ViewResult.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                OnViewResult(view);
+            }
+        });
+
+        ViewResult.setBackgroundColor(Color.rgb(0,0,255));
+        ViewResult.setText(R.string.ViewSendedPackets);
+
+
         WebView webView = new WebView(this);
         webView.getSettings().setJavaScriptEnabled(true);
+
         webView.loadUrl("http://node00.ddns.net:8080/flow/recv.html");
         webView.setInitialScale(500);
 
+
+        mainLay.addView(gl);
+        mainLay.addView(ViewResult);
         mainLay.addView(webView);
     }
 
@@ -399,7 +415,7 @@ public class MainActivity extends AppCompatActivity {
                         message[1] = (byte)Integer.parseInt(b.getTag().toString());
                         message[2] = (byte)red; //R
                         message[3] = (byte)green; //G
-                        message[4] = (byte)blue;
+                        message[4] = (byte)blue; //B
                         packet = new DatagramPacket(message, message.length, address, destinationPort);
                         socket.send(packet);
                     }

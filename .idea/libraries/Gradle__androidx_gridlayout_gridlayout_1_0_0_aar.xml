@@ -4,6 +4,9 @@
       <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/ecfbab131b1b1c98bac16d8552606e62/transformed/gridlayout-1.0.0/jars/classes.jar!/" />
       <root url="file://$USER_HOME$/.gradle/caches/transforms-3/ecfbab131b1b1c98bac16d8552606e62/transformed/gridlayout-1.0.0/res" />
       <root url="file://$USER_HOME$/.gradle/caches/transforms-3/ecfbab131b1b1c98bac16d8552606e62/transformed/gridlayout-1.0.0/AndroidManifest.xml" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/775bfdccaeeb064afba6a9a7c4b51332/transformed/gridlayout-1.0.0/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/775bfdccaeeb064afba6a9a7c4b51332/transformed/gridlayout-1.0.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/775bfdccaeeb064afba6a9a7c4b51332/transformed/gridlayout-1.0.0/res" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
