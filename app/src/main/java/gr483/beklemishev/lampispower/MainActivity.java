@@ -1,25 +1,18 @@
 package gr483.beklemishev.lampispower;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Dialog;
-import android.content.res.AssetManager;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.drawable.ColorDrawable;
-import android.media.Image;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -30,8 +23,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -59,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        StaticDbAccess.dataBase = new DataBaseClass(this, "database.db", null,1);
 
         gl = new GridLayout(this);
 
@@ -211,9 +204,17 @@ public class MainActivity extends AppCompatActivity {
         SeekBar green = customLayout.findViewById(R.id.sbGreen);
         SeekBar blue = customLayout.findViewById(R.id.sbBlue);
 
-        red.setProgress(0);
-        green.setProgress(0);
-        blue.setProgress(0);
+        Button senderButton = (Button)v;
+
+        int color = ((ColorDrawable)senderButton.getBackground()).getColor();
+        previewColor.setBackgroundColor(Color.rgb(Color.red(color), Color.green(color), Color.blue(color)));
+        etRed.setText(String.valueOf(Color.red(color)));
+        etGreen.setText(String.valueOf(Color.green(color)));
+        etBlue.setText(String.valueOf(Color.blue(color)));
+
+        red.setProgress(Color.red(color));
+        green.setProgress(Color.green(color));
+        blue.setProgress(Color.blue(color));
 
         etRed.addTextChangedListener(new TextWatcher() {
             @Override
@@ -223,6 +224,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
             }
 
             @Override
@@ -445,60 +447,76 @@ public class MainActivity extends AppCompatActivity {
 
         switch(id){
             case R.id.Settings: {
-                final View customLayout = getLayoutInflater().inflate(R.layout.dialog_settings, null);
-                AlertDialog.Builder bld = new AlertDialog.Builder(this);
-                bld.setTitle("Настройки подключения!");
-                bld.setView(customLayout);
-
-                Dialog dlg = bld.create();
-
-                EditText address = customLayout.findViewById(R.id.etDestinationAddress);
-                EditText port = customLayout.findViewById(R.id.etDestinationPort);
-                EditText etGridWidth = customLayout.findViewById(R.id.etGridWidth);
-                EditText etGridHeight = customLayout.findViewById(R.id.etGridHeight);
-
-                Button accept = customLayout.findViewById(R.id.bAcceptSettings);
-                Button cancel = customLayout.findViewById(R.id.bCancelSettings);
-
-                address.setText(destinationAddress);
-                port.setText(String.valueOf(destinationPort));
-                etGridWidth.setText(String.valueOf(gridWidth));
-                etGridHeight.setText(String.valueOf(gridHeight));
-
-                dlg.show();
-
-                accept.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        destinationAddress = String.valueOf(address.getText());
-                        destinationPort = Integer.valueOf(String.valueOf(port.getText()));
-
-                        if(String.valueOf(etGridWidth.getText()) != String.valueOf(gridWidth) || String.valueOf(etGridHeight.getText()) != String.valueOf(gridHeight))
-                        {
-                            GridChanged();
-                        }
-                        dlg.cancel();
-                    }
-
-                    private void GridChanged(){
-                        gridWidth = Integer.valueOf(etGridWidth.getText().toString());
-                        gridHeight = Integer.valueOf(etGridHeight.getText().toString());
-                        gl.removeAllViews();
-                        gl.setColumnCount(gridWidth);
-                        gl.setRowCount(gridHeight);
-                        FillGrid(gridWidth,gridHeight);
-                    }
-                });
-
-                cancel.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        dlg.cancel();
-                    }
-                });
+                OnSettingsClick();
             }
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void OnSettingsClick() {
+        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_settings, null);
+        AlertDialog.Builder bld = new AlertDialog.Builder(this);
+        bld.setTitle("Настройки подключения!");
+        bld.setView(customLayout);
+
+        Dialog dlg = bld.create();
+
+        EditText address = customLayout.findViewById(R.id.etDestinationAddress);
+        EditText port = customLayout.findViewById(R.id.etDestinationPort);
+        EditText etGridWidth = customLayout.findViewById(R.id.etGridWidth);
+        EditText etGridHeight = customLayout.findViewById(R.id.etGridHeight);
+
+        Button accept = customLayout.findViewById(R.id.bAcceptSettings);
+        Button cancel = customLayout.findViewById(R.id.bCancelSettings);
+        Button saveNetwork = customLayout.findViewById(R.id.bSaveSettings);
+        Button loadNetwork = customLayout.findViewById(R.id.bLoadSettings);
+
+        address.setText(destinationAddress);
+        port.setText(String.valueOf(destinationPort));
+        etGridWidth.setText(String.valueOf(gridWidth));
+        etGridHeight.setText(String.valueOf(gridHeight));
+
+        dlg.show();
+
+        saveNetwork.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int sid = StaticDbAccess.dataBase.getMaxIdFromNetworkSettings();
+                StaticDbAccess.dataBase.SaveNetworkSettings(sid, "New" ,address.getText().toString(), Integer.parseInt(port.getText().toString()));
+                Toast toast = new Toast(getApplicationContext());
+                toast.setText("Settings is saved!");
+                toast.setDuration(Toast.LENGTH_LONG);
+                toast.show();
+            }
+        });
+        accept.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                destinationAddress = String.valueOf(address.getText());
+                destinationPort = Integer.valueOf(String.valueOf(port.getText()));
+
+                if(String.valueOf(etGridWidth.getText()) != String.valueOf(gridWidth) || String.valueOf(etGridHeight.getText()) != String.valueOf(gridHeight))
+                {
+                    GridChanged();
+                }
+                dlg.cancel();
+            }
+
+            private void GridChanged(){
+                gridWidth = Integer.valueOf(etGridWidth.getText().toString());
+                gridHeight = Integer.valueOf(etGridHeight.getText().toString());
+                gl.removeAllViews();
+                gl.setColumnCount(gridWidth);
+                gl.setRowCount(gridHeight);
+                FillGrid(gridWidth,gridHeight);
+            }
+        });
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dlg.cancel();
+            }
+        });
     }
 }

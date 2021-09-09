@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class DataBaseClass extends SQLiteOpenHelper {
     public DataBaseClass(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
@@ -16,20 +17,46 @@ public class DataBaseClass extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE GridLayouts (id INT, tags INT, text TXT);";
-        db.execSQL(sql);
-        sql = "CREATE TABLE NetworkSettins (id INT, title TXT, address TXT, port, INT);";
+//        String sql = "CREATE TABLE GridLayouts (id INT, tags INT, text TXT);";
+//        db.execSQL(sql);
+        String sql = "CREATE TABLE NetworkSettings (id INT, title TXT, address TXT, port, INT);";
         db.execSQL(sql);
     }
 
-//    public int getMaxId()
-//    {
-//        SQLiteDatabase db = getReadableDatabase();
-//        String sql = "SELECT Max(id) FROM notes;";
-//        Cursor cur = db.rawQuery(sql, null);
-//        if(cur.moveToFirst() == true) return cur.getInt(0);
-//        return 0;
-//    }
+    public int getMaxIdFromNetworkSettings()
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT Max(id) FROM NetworkSettings;";
+        Cursor cur = db.rawQuery(sql, null);
+        if(cur.moveToFirst() == true) return cur.getInt(0);
+        return 0;
+    }
+    public void SaveNetworkSettings(int id, String title, String address, int port)
+    {
+        String sid = String.valueOf(id);
+        SQLiteDatabase db = getWritableDatabase();
+        String sql = "INSERT INTO NetworkSettings VALUES ("+ sid +", "+ title+", "+ address +", "+ port +");";
+        db.execSQL(sql);
+    }
+
+    public ArrayList<NetworkSettings> LoadNetworkSettings()
+    {
+        ArrayList<NetworkSettings> list = new ArrayList<NetworkSettings>();
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT id, savedLayout, text FROM GridLayouts;";
+        Cursor cur = db.rawQuery(sql,null);
+        if(cur.moveToFirst() == true){
+            do {
+                NetworkSettings n = new NetworkSettings();
+                n.id = cur.getInt(0);
+                n.Title = cur.getString(1);
+                n.Address = cur.getString(2);
+                n.Port = cur.getInt(3);
+                list.add(n);
+            } while (cur.moveToNext() == true);
+        }
+        return list;
+    }
 
     public void addGridLayoutSave (int id, int[] tags, String name)
     {
