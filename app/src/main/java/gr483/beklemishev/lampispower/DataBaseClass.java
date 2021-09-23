@@ -38,13 +38,16 @@ public class DataBaseClass extends SQLiteOpenHelper {
         db.execSQL(sql);
     }
 
-    public void addGridLayoutSave (int id, int[] tags, String name)
+    public void addGridLayoutCombination (int id, int[] tags, String name)
     {
         String sid = String.valueOf(id);
         int[] savedTags = tags;
-        SQLiteDatabase db = getWritableDatabase();
-        String sql = "INSERT INTO GridLayouts VALUES (" + sid + ", " + tags +" ,'" + name + "');";
-        db.execSQL(sql);
+        for (int i = 0; i < savedTags.length; i++)
+        {
+            SQLiteDatabase db = getWritableDatabase();
+            String sql = "INSERT INTO GridLayouts VALUES (" + sid + ", " + savedTags[i] +" ,'" + name + "');";
+            db.execSQL(sql);
+        }
     }
 
 //    public void updateNote(int id, String text)
@@ -71,6 +74,19 @@ public class DataBaseClass extends SQLiteOpenHelper {
 //        if (cur.moveToFirst() == true) return cur.getString(0);
 //        return "";
 //    }
+public void getAllGridLayoutCombinations(ArrayList<GridLayoutCombination> lst)
+{
+    SQLiteDatabase db = getReadableDatabase();
+    String sql = "SELECT id, Title, Address, Port FROM NetworkSettings;";
+    Cursor cur = db.rawQuery(sql,null);
+    if(cur.moveToFirst() == true){
+        do {
+            GridLayoutCombination n = new GridLayoutCombination();
+            n.id = cur.getInt(0);
+            lst.add(n);
+        } while (cur.moveToNext() == true);
+    }
+}
 
     public void getAllNetworkSettings(ArrayList<NetworkSettings> lst)
     {

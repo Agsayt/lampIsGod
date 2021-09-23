@@ -1,9 +1,12 @@
 package gr483.beklemishev.lampispower;
 
-public class GridLayoutClass {
+import java.sql.Struct;
+
+public class GridLayoutCombination {
     public int id;
-    public int[] savedlayout;
+    public int[] tags;
     public String Name;
+
 
 
 }
