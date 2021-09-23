@@ -15,4 +15,7 @@
     <string name="SizesOfGrid">Размеры сетки:</string>
     <string name="Width">Ширина</string>
     <string name="Height">Высота</string>
+    <string name="Save">Сохранить</string>
+    <string name="Load">Загрузить</string>
+    <string name="SaveName">Название:</string>
 </resources>

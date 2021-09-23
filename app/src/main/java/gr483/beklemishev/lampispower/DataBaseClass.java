@@ -16,18 +16,27 @@ public class DataBaseClass extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE GridLayouts (id INT, text TXT);";
+//        String sql = "CREATE TABLE GridLayouts (id INT, text TXT);";
+        String sql = "CREATE TABLE NetworkSettings (id INT, title TXT, address TXT, port INT);";
         db.execSQL(sql);
     }
 
-//    public int getMaxId()
-//    {
-//        SQLiteDatabase db = getReadableDatabase();
-//        String sql = "SELECT Max(id) FROM notes;";
-//        Cursor cur = db.rawQuery(sql, null);
-//        if(cur.moveToFirst() == true) return cur.getInt(0);
-//        return 0;
-//    }
+    public int getMaxIdForNetworkSettings()
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT Max(id) FROM NetworkSettings;";
+        Cursor cur = db.rawQuery(sql, null);
+        if(cur.moveToFirst() == true) return cur.getInt(0);
+        return 0;
+    }
+
+    public void addNetworkSettingsSave (int id, String title, String address, int port)
+    {
+        String sid = String.valueOf(id);
+        SQLiteDatabase db = getWritableDatabase();
+        String sql = "INSERT INTO NetworkSettings VALUES (" + sid + ", '" + title + "' ,'" + address + "', "+ port +");";
+        db.execSQL(sql);
+    }
 
     public void addGridLayoutSave (int id, int[] tags, String name)
     {
@@ -63,17 +72,18 @@ public class DataBaseClass extends SQLiteOpenHelper {
 //        return "";
 //    }
 
-    public void getAllNotes(ArrayList<GridLayout> lst)
+    public void getAllNetworkSettings(ArrayList<NetworkSettings> lst)
     {
         SQLiteDatabase db = getReadableDatabase();
-        String sql = "SELECT id, savedLayout, text FROM GridLayouts;";
+        String sql = "SELECT id, Title, Address, Port FROM NetworkSettings;";
         Cursor cur = db.rawQuery(sql,null);
         if(cur.moveToFirst() == true){
             do {
-                GridLayout n = new GridLayout();
+                NetworkSettings n = new NetworkSettings();
                 n.id = cur.getInt(0);
-//                n.savedlayout = cur.getString(1);
-                n.Name = cur.getString(2);
+                n.Title = cur.getString(1);
+                n.Address = cur.getString(2);
+                n.Port = cur.getInt(3);
                 lst.add(n);
             } while (cur.moveToNext() == true);
         }

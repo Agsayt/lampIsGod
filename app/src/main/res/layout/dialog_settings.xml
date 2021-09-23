@@ -39,6 +39,34 @@
         android:minHeight="48dp"
         tools:ignore="SpeakableTextPresentCheck" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/bSaveNetworkSettingsDialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:insetLeft="6dp"
+            android:insetTop="6dp"
+            android:insetRight="6dp"
+            android:insetBottom="6dp"
+            android:text="@string/Save" />
+
+        <Button
+            android:id="@+id/bLoadNetworkSettingsDialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:insetLeft="6dp"
+            android:insetTop="6dp"
+            android:insetRight="6dp"
+            android:insetBottom="6dp"
+            android:text="@string/Load" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/textView7"
         android:layout_width="match_parent"

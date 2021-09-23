@@ -5,35 +5,30 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Dialog;
-import android.content.res.AssetManager;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.drawable.ColorDrawable;
-import android.media.Image;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -51,12 +46,25 @@ public class MainActivity extends AppCompatActivity {
     int gridWidth = 4;
     int gridHeight = 4;
 
+    // Листы для настроек сети
+    ListView loadLV;
+    ArrayList<NetworkSettings> lstNetwork = new ArrayList<NetworkSettings>();
+    ArrayAdapter<NetworkSettings> adpNetwork;
+    //
+
+    // Листы для сохранения картинок
+    ListView imagesLV;
+    ArrayList<NetworkSettings> lstImages = new ArrayList<NetworkSettings>();
+    ArrayAdapter<NetworkSettings> adpImages;
+    //
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        StaticDb.database = new DataBaseClass(this,"lampDb.db",null,1);
 
         gl = new GridLayout(this);
 
@@ -69,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
         mainLay.addView(gl);
 
         FillGrid(gridWidth,gridWidth);
-
 
         try {
             socket = new DatagramSocket(null);
@@ -443,6 +450,8 @@ public class MainActivity extends AppCompatActivity {
 
                 Button accept = customLayout.findViewById(R.id.bAcceptSettings);
                 Button cancel = customLayout.findViewById(R.id.bCancelSettings);
+                Button save = customLayout.findViewById(R.id.bSaveNetworkSettingsDialog);
+                Button load = customLayout.findViewById(R.id.bLoadNetworkSettingsDialog);
 
                 address.setText(destinationAddress);
                 port.setText(String.valueOf(destinationPort));
@@ -450,6 +459,19 @@ public class MainActivity extends AppCompatActivity {
                 etGridHeight.setText(String.valueOf(gridHeight));
 
                 dlg.show();
+
+                save.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        OnNetworkSettingsSave(view, "save", address.getText().toString(), port.getText().toString());
+                    }
+                });
+                load.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        OnNetworkSettingsLoad(view, "load", address, port);
+                    }
+                });
 
                 accept.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -473,7 +495,6 @@ public class MainActivity extends AppCompatActivity {
                         FillGrid(gridWidth,gridHeight);
                     }
                 });
-
                 cancel.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -485,4 +506,64 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    private void OnNetworkSettingsLoad(View view, String load, EditText address, EditText port) {
+        View customLayout = getLayoutInflater().inflate(R.layout.dialog_loadnetworksettings, null);
+        AlertDialog.Builder bld = new AlertDialog.Builder(this);
+        bld.setTitle("Загрузка настроек подключения!");
+        bld.setView(customLayout);
+
+        Dialog dlg = bld.create();
+        dlg.show();
+
+        loadLV = customLayout.findViewById(R.id.lvNetworkSettings);
+        adpNetwork = new ArrayAdapter<NetworkSettings>(this, android.R.layout.simple_list_item_1, lstNetwork);
+
+        loadLV.setAdapter(adpNetwork);
+
+        loadLV.setOnItemClickListener((parent, _view, position, id) -> {
+            NetworkSettings n = adpNetwork.getItem(position);
+            address.setText(n.Address);
+            port.setText(String.valueOf(n.Port));
+            dlg.cancel();
+        });
+
+        lstNetwork.clear();
+        StaticDb.database.getAllNetworkSettings(lstNetwork);
+        adpNetwork.notifyDataSetChanged();
+    }
+
+    private void OnNetworkSettingsSave(View view, String mode, String _address, String _port) {
+
+        View customLayout = getLayoutInflater().inflate(R.layout.dialog_savenetworksettings, null);
+        AlertDialog.Builder bld = new AlertDialog.Builder(this);
+        bld.setTitle("Сохранение настроек подключения!");
+        bld.setView(customLayout);
+
+        Dialog dlg = bld.create();
+
+        EditText title = customLayout.findViewById(R.id.etSaveName);
+        EditText address = customLayout.findViewById(R.id.etAddressToSave);
+        EditText port = customLayout.findViewById(R.id.etPortToSave);
+
+        Button save = customLayout.findViewById(R.id.bSaveNetworkSettings);
+        Button cancel = customLayout.findViewById(R.id.bCancelNetworkSettingsDialog);
+
+        address.setText(_address);
+        port.setText(_port);
+
+        dlg.show();
+
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int nid = StaticDb.database.getMaxIdForNetworkSettings() + 1;
+                StaticDb.database.addNetworkSettingsSave(nid, title.getText().toString(), address.getText().toString(), Integer.valueOf(port.getText().toString()));
+                Toast.makeText(getApplicationContext(), "Запись добавлена!", Toast.LENGTH_LONG).show();
+                dlg.cancel();
+            }
+        });
+    }
+
+
 }
