@@ -117,8 +117,17 @@ public class MainActivity extends AppCompatActivity {
 
         WebView webView = new WebView(this);
         webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setUseWideViewPort(true);
+        webView.getSettings().setLoadsImagesAutomatically(true);
         webView.loadUrl("http://node00.ddns.net:8080/flow/recv.html");
         webView.setInitialScale(500);
+
+        webView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        }, 1000);
 
         mainLay.addView(webView);
     }

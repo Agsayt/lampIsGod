@@ -18,4 +18,6 @@
     <string name="Save">Сохранить</string>
     <string name="Load">Загрузить</string>
     <string name="SaveName">Название:</string>
+    <string name="SaveLayout">Сохранить сетку</string>
+    <string name="LoadLayout">Загрузить сетку</string>
 </resources>
