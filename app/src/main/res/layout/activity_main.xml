@@ -8,6 +8,13 @@
     android:orientation="vertical"
     tools:context=".MainActivity" >
 
+    <LinearLayout
+        android:id="@+id/layoutForGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"></LinearLayout>
+
     <Button
         android:id="@+id/button"
         android:layout_width="match_parent"
@@ -16,5 +23,25 @@
         android:insetRight="6dp"
         android:onClick="OnViewResult"
         android:text="@string/ViewSendedPackets" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/bSaveLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Button" />
+
+        <Button
+            android:id="@+id/bLoadLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Button" />
+    </LinearLayout>
 
 </LinearLayout>

@@ -5,4 +5,9 @@ public class NetworkSettings {
     public String Title;
     public String Address;
     public int Port;
+
+    public String toString()
+    {
+        return String.valueOf(id) + " " + Title + " " + Address + ":" + Port;
+    }
 }

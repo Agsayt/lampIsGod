@@ -4,9 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -14,11 +14,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,11 +29,14 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     GridLayout gl;
     LinearLayout mainLay;
+    LinearLayout layForGrid;
 
     InetAddress address;
     DatagramSocket socket;
@@ -44,25 +49,65 @@ public class MainActivity extends AppCompatActivity {
     int gridWidth = 4;
     int gridHeight = 4;
 
+    // Лист добавленных кнопок
+    List<Button> addedButtons = new ArrayList<>();
+
+    // Листы для настроек сети
+    ListView loadLV;
+    ArrayList<NetworkSettings> lstNetwork = new ArrayList<NetworkSettings>();
+    ArrayAdapter<NetworkSettings> adpNetwork;
+    //
+
+    // Листы для разметок
+    ListView loadGL;
+    ArrayList<GridLayoutCombination> lstLayout = new ArrayList<GridLayoutCombination>();
+    ArrayAdapter<GridLayoutCombination> adpLayout;
+
+    // Листы для сохранения картинок
+    ListView imagesLV;
+    ArrayList<NetworkSettings> lstImages = new ArrayList<NetworkSettings>();
+    ArrayAdapter<NetworkSettings> adpImages;
+    //
 
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        StaticDbAccess.dataBase = new DataBaseClass(this, "database.db", null,1);
+        StaticDb.database = new DataBaseClass(this,"lampDb5.db",null,5);
 
         gl = new GridLayout(this);
 
         gl.setColumnCount(gridWidth);
         gl.setRowCount(gridHeight);
         gl.setUseDefaultMargins(true);
+        gl.setAlignmentMode(GridLayout.ALIGN_BOUNDS);
+
+
+        Button saveLayout = findViewById(R.id.bSaveLayout);
+        saveLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                SaveLayout(view);
+            }
+        });
+
+        Button loadLayout = findViewById(R.id.bLoadLayout);
+        loadLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LoadLayout(view);
+            }
+        });
 
         mainLay = findViewById(R.id.mainLayout);
+        layForGrid = findViewById(R.id.layoutForGrid);
+
+        layForGrid.addView(gl);
 
         FillGrid(gridWidth,gridWidth);
-
 
         try {
             socket = new DatagramSocket(null);
@@ -70,31 +115,57 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        Button ViewResult = new Button(this);
-        ViewResult.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                OnViewResult(view);
-            }
-        });
-
-        ViewResult.setBackgroundColor(Color.rgb(0,0,255));
-        ViewResult.setText(R.string.ViewSendedPackets);
-
-
         WebView webView = new WebView(this);
         webView.getSettings().setJavaScriptEnabled(true);
-
         webView.loadUrl("http://node00.ddns.net:8080/flow/recv.html");
         webView.setInitialScale(500);
 
-
-        mainLay.addView(gl);
-        mainLay.addView(ViewResult);
         mainLay.addView(webView);
     }
 
+    private void SaveLayout(View view) {
+        int[] buffer = new int[gridHeight*gridWidth];
+        for (int i=0;i < addedButtons.size();i++) {
+             buffer[i] = Integer.parseInt(addedButtons.get(i).getTag().toString());
+        }
+        int nid = StaticDb.database.getMaxIdForLayoutCombination() + 1;
+        StaticDb.database.addGridLayoutCombination(nid, buffer, "Save #" + nid);
+
+        Toast.makeText(getApplicationContext(), "Сетка успешно сохранена!", Toast.LENGTH_LONG).show();
+    }
+
+    private void LoadLayout(View view){
+        View customLayout = getLayoutInflater().inflate(R.layout.dialog_loadnetworksettings, null);
+        AlertDialog.Builder bld = new AlertDialog.Builder(this);
+        bld.setTitle("Загрузка разметки!");
+        bld.setView(customLayout);
+
+        Dialog dlg = bld.create();
+        dlg.show();
+
+        loadGL = customLayout.findViewById(R.id.lvNetworkSettings);
+        adpLayout = new ArrayAdapter<GridLayoutCombination>(this, android.R.layout.simple_list_item_1, lstLayout);
+
+
+        loadGL.setAdapter(adpLayout);
+
+        loadGL.setOnItemClickListener((parent, _view, position, id) -> {
+            GridLayoutCombination n = adpLayout.getItem(position);
+                for (int i=0; i < addedButtons.size(); i++) {
+                     addedButtons.get(i).setTag(n.tags.get(i));
+                     addedButtons.get(i).setText(n.tags.get(i).toString());
+                }
+            dlg.cancel();
+        });
+
+        lstLayout.clear();
+        StaticDb.database.getAllGridLayoutCombinations(lstLayout);
+        adpLayout.notifyDataSetChanged();
+
+    }
+
     private void FillGrid(int width, int height) {
+        addedButtons.clear();
         int size = width * height;
         for (int i = 0; i < size; i++)
         {
@@ -117,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+            addedButtons.add(btn);
             gl.addView(btn);
         }
     }
@@ -204,17 +276,9 @@ public class MainActivity extends AppCompatActivity {
         SeekBar green = customLayout.findViewById(R.id.sbGreen);
         SeekBar blue = customLayout.findViewById(R.id.sbBlue);
 
-        Button senderButton = (Button)v;
-
-        int color = ((ColorDrawable)senderButton.getBackground()).getColor();
-        previewColor.setBackgroundColor(Color.rgb(Color.red(color), Color.green(color), Color.blue(color)));
-        etRed.setText(String.valueOf(Color.red(color)));
-        etGreen.setText(String.valueOf(Color.green(color)));
-        etBlue.setText(String.valueOf(Color.blue(color)));
-
-        red.setProgress(Color.red(color));
-        green.setProgress(Color.green(color));
-        blue.setProgress(Color.blue(color));
+        red.setProgress(0);
+        green.setProgress(0);
+        blue.setProgress(0);
 
         etRed.addTextChangedListener(new TextWatcher() {
             @Override
@@ -224,7 +288,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
             }
 
             @Override
@@ -417,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
                         message[1] = (byte)Integer.parseInt(b.getTag().toString());
                         message[2] = (byte)red; //R
                         message[3] = (byte)green; //G
-                        message[4] = (byte)blue; //B
+                        message[4] = (byte)blue;
                         packet = new DatagramPacket(message, message.length, address, destinationPort);
                         socket.send(packet);
                     }
@@ -447,76 +510,134 @@ public class MainActivity extends AppCompatActivity {
 
         switch(id){
             case R.id.Settings: {
-                OnSettingsClick();
+                final View customLayout = getLayoutInflater().inflate(R.layout.dialog_settings, null);
+                AlertDialog.Builder bld = new AlertDialog.Builder(this);
+                bld.setTitle("Настройки подключения!");
+                bld.setView(customLayout);
+
+                Dialog dlg = bld.create();
+
+                EditText address = customLayout.findViewById(R.id.etDestinationAddress);
+                EditText port = customLayout.findViewById(R.id.etDestinationPort);
+                EditText etGridWidth = customLayout.findViewById(R.id.etGridWidth);
+                EditText etGridHeight = customLayout.findViewById(R.id.etGridHeight);
+
+                Button accept = customLayout.findViewById(R.id.bAcceptSettings);
+                Button cancel = customLayout.findViewById(R.id.bCancelSettings);
+                Button save = customLayout.findViewById(R.id.bSaveNetworkSettingsDialog);
+                Button load = customLayout.findViewById(R.id.bLoadNetworkSettingsDialog);
+
+                address.setText(destinationAddress);
+                port.setText(String.valueOf(destinationPort));
+                etGridWidth.setText(String.valueOf(gridWidth));
+                etGridHeight.setText(String.valueOf(gridHeight));
+
+                dlg.show();
+
+                save.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        OnNetworkSettingsSave(view, "save", address.getText().toString(), port.getText().toString());
+                    }
+                });
+                load.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        OnNetworkSettingsLoad(view, "load", address, port);
+                    }
+                });
+
+                accept.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        destinationAddress = String.valueOf(address.getText());
+                        destinationPort = Integer.valueOf(String.valueOf(port.getText()));
+
+                        if(String.valueOf(etGridWidth.getText()) != String.valueOf(gridWidth) || String.valueOf(etGridHeight.getText()) != String.valueOf(gridHeight))
+                        {
+                            GridChanged();
+                        }
+                        dlg.cancel();
+                    }
+
+                    private void GridChanged(){
+                        gridWidth = Integer.valueOf(etGridWidth.getText().toString());
+                        gridHeight = Integer.valueOf(etGridHeight.getText().toString());
+                        gl.removeAllViews();
+                        gl.setColumnCount(gridWidth);
+                        gl.setRowCount(gridHeight);
+                        FillGrid(gridWidth,gridHeight);
+                    }
+                });
+                cancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        dlg.cancel();
+                    }
+                });
             }
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private void OnSettingsClick() {
-        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_settings, null);
+    private void OnNetworkSettingsLoad(View view, String load, EditText address, EditText port) {
+        View customLayout = getLayoutInflater().inflate(R.layout.dialog_loadnetworksettings, null);
         AlertDialog.Builder bld = new AlertDialog.Builder(this);
-        bld.setTitle("Настройки подключения!");
+        bld.setTitle("Загрузка настроек подключения!");
+        bld.setView(customLayout);
+
+        Dialog dlg = bld.create();
+        dlg.show();
+
+        loadLV = customLayout.findViewById(R.id.lvNetworkSettings);
+        adpNetwork = new ArrayAdapter<NetworkSettings>(this, android.R.layout.simple_list_item_1, lstNetwork);
+
+        loadLV.setAdapter(adpNetwork);
+
+        loadLV.setOnItemClickListener((parent, _view, position, id) -> {
+            NetworkSettings n = adpNetwork.getItem(position);
+            address.setText(n.Address);
+            port.setText(String.valueOf(n.Port));
+            dlg.cancel();
+        });
+
+        lstNetwork.clear();
+        StaticDb.database.getAllNetworkSettings(lstNetwork);
+        adpNetwork.notifyDataSetChanged();
+    }
+
+    private void OnNetworkSettingsSave(View view, String mode, String _address, String _port) {
+
+        View customLayout = getLayoutInflater().inflate(R.layout.dialog_savenetworksettings, null);
+        AlertDialog.Builder bld = new AlertDialog.Builder(this);
+        bld.setTitle("Сохранение настроек подключения!");
         bld.setView(customLayout);
 
         Dialog dlg = bld.create();
 
-        EditText address = customLayout.findViewById(R.id.etDestinationAddress);
-        EditText port = customLayout.findViewById(R.id.etDestinationPort);
-        EditText etGridWidth = customLayout.findViewById(R.id.etGridWidth);
-        EditText etGridHeight = customLayout.findViewById(R.id.etGridHeight);
+        EditText title = customLayout.findViewById(R.id.etSaveName);
+        EditText address = customLayout.findViewById(R.id.etAddressToSave);
+        EditText port = customLayout.findViewById(R.id.etPortToSave);
 
-        Button accept = customLayout.findViewById(R.id.bAcceptSettings);
-        Button cancel = customLayout.findViewById(R.id.bCancelSettings);
-        Button saveNetwork = customLayout.findViewById(R.id.bSaveSettings);
-        Button loadNetwork = customLayout.findViewById(R.id.bLoadSettings);
+        Button save = customLayout.findViewById(R.id.bSaveNetworkSettings);
+        Button cancel = customLayout.findViewById(R.id.bCancelNetworkSettingsDialog);
 
-        address.setText(destinationAddress);
-        port.setText(String.valueOf(destinationPort));
-        etGridWidth.setText(String.valueOf(gridWidth));
-        etGridHeight.setText(String.valueOf(gridHeight));
+        address.setText(_address);
+        port.setText(_port);
 
         dlg.show();
 
-        saveNetwork.setOnClickListener(new View.OnClickListener() {
+        save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int sid = StaticDbAccess.dataBase.getMaxIdFromNetworkSettings();
-                StaticDbAccess.dataBase.SaveNetworkSettings(sid, "New" ,address.getText().toString(), Integer.parseInt(port.getText().toString()));
-                Toast toast = new Toast(getApplicationContext());
-                toast.setText("Settings is saved!");
-                toast.setDuration(Toast.LENGTH_LONG);
-                toast.show();
-            }
-        });
-        accept.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                destinationAddress = String.valueOf(address.getText());
-                destinationPort = Integer.valueOf(String.valueOf(port.getText()));
-
-                if(String.valueOf(etGridWidth.getText()) != String.valueOf(gridWidth) || String.valueOf(etGridHeight.getText()) != String.valueOf(gridHeight))
-                {
-                    GridChanged();
-                }
-                dlg.cancel();
-            }
-
-            private void GridChanged(){
-                gridWidth = Integer.valueOf(etGridWidth.getText().toString());
-                gridHeight = Integer.valueOf(etGridHeight.getText().toString());
-                gl.removeAllViews();
-                gl.setColumnCount(gridWidth);
-                gl.setRowCount(gridHeight);
-                FillGrid(gridWidth,gridHeight);
-            }
-        });
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+                int nid = StaticDb.database.getMaxIdForNetworkSettings() + 1;
+                StaticDb.database.addNetworkSettingsSave(nid, title.getText().toString(), address.getText().toString(), Integer.valueOf(port.getText().toString()));
+                Toast.makeText(getApplicationContext(), "Запись добавлена!", Toast.LENGTH_LONG).show();
                 dlg.cancel();
             }
         });
     }
+
+
 }

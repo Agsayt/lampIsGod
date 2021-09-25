@@ -1,5 +1,6 @@
 package gr483.beklemishev.lampispower;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -17,54 +18,56 @@ public class DataBaseClass extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-//        String sql = "CREATE TABLE GridLayouts (id INT, tags INT, text TXT);";
-//        db.execSQL(sql);
-        String sql = "CREATE TABLE NetworkSettings (id INT, title TXT, address TXT, port, INT);";
+        String sql = "CREATE TABLE GridLayoutsCombination (id INT, tagPosition INT, tag INT, name TXT);";
+        db.execSQL(sql);
+
+        sql = "CREATE TABLE NetworkSettings (id INT, title TXT, address TXT, port INT);";
         db.execSQL(sql);
     }
 
-    public int getMaxIdFromNetworkSettings()
+    public int getMaxIdForNetworkSettings()
     {
         SQLiteDatabase db = getReadableDatabase();
         String sql = "SELECT Max(id) FROM NetworkSettings;";
         Cursor cur = db.rawQuery(sql, null);
-        if(cur.moveToFirst() == true) return cur.getInt(0);
+        if(cur.moveToFirst()) return cur.getInt(0);
+        cur.close();
         return 0;
     }
-    public void SaveNetworkSettings(int id, String title, String address, int port)
+
+    public int getMaxIdForLayoutCombination()
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT Max(id) FROM GridLayoutsCombination;";
+        Cursor cur = db.rawQuery(sql, null);
+        if(cur.moveToFirst()) {
+            int buffer = cur.getInt(0);
+            cur.close();
+            return buffer;
+        }
+        cur.close();
+        return 0;
+    }
+
+    public void addNetworkSettingsSave (int id, String title, String address, int port)
     {
         String sid = String.valueOf(id);
         SQLiteDatabase db = getWritableDatabase();
-        String sql = "INSERT INTO NetworkSettings VALUES ("+ sid +", "+ title+", "+ address +", "+ port +");";
+        String sql = "INSERT INTO NetworkSettings VALUES (" + sid + ", '" + title + "' ,'" + address + "', "+ port +");";
         db.execSQL(sql);
     }
 
-    public ArrayList<NetworkSettings> LoadNetworkSettings()
+    public void addGridLayoutCombination (int id, int[] tags, String name)
     {
-        ArrayList<NetworkSettings> list = new ArrayList<NetworkSettings>();
-        SQLiteDatabase db = getReadableDatabase();
-        String sql = "SELECT id, savedLayout, text FROM GridLayouts;";
-        Cursor cur = db.rawQuery(sql,null);
-        if(cur.moveToFirst() == true){
-            do {
-                NetworkSettings n = new NetworkSettings();
-                n.id = cur.getInt(0);
-                n.Title = cur.getString(1);
-                n.Address = cur.getString(2);
-                n.Port = cur.getInt(3);
-                list.add(n);
-            } while (cur.moveToNext() == true);
-        }
-        return list;
-    }
 
-    public void addGridLayoutSave (int id, int[] tags, String name)
-    {
         String sid = String.valueOf(id);
         int[] savedTags = tags;
         SQLiteDatabase db = getWritableDatabase();
-        String sql = "INSERT INTO GridLayouts VALUES (" + sid + ", " + tags +" ,'" + name + "');";
-        db.execSQL(sql);
+        for (int i = 0; i < savedTags.length; i++)
+        {
+            String sql = "INSERT INTO GridLayoutsCombination VALUES (" + sid + ","+ i +"," + savedTags[i] +" ,'" + name + "');";
+            db.execSQL(sql);
+        }
     }
 
 //    public void updateNote(int id, String text)
@@ -75,9 +78,9 @@ public class DataBaseClass extends SQLiteOpenHelper {
 //        db.execSQL(sql);
 //    }
 
-    public void deleteGridLayoutSave(int sid)
+    public void deleteGridLayoutCombination(int sid)
     {
-        String sql = "DELETE FROM notes WHERE id = '"+ sid +"';";
+        String sql = "DELETE FROM GridLayoutsCombination WHERE id = '"+ sid +"';";
         SQLiteDatabase db = getReadableDatabase();
         db.execSQL(sql);
     }
@@ -91,21 +94,108 @@ public class DataBaseClass extends SQLiteOpenHelper {
 //        if (cur.moveToFirst() == true) return cur.getString(0);
 //        return "";
 //    }
+@SuppressLint("Range")
+public void getAllGridLayoutCombinations(ArrayList<GridLayoutCombination> lst)
+{
+    SQLiteDatabase db = getReadableDatabase();
+    String sql = "SELECT id, tagPosition, tag, name FROM GridLayoutsCombination ORDER By id ASC, tagPosition ASC;";
+    Cursor cur = db.rawQuery(sql,null);
+    GridLayoutCombination n = new GridLayoutCombination();
+    cur.moveToPosition(0);
+        int currentID;
+        int previousID = cur.getInt(0);
+        boolean firstIteration = true;
+        do
+        {
+            currentID = cur.getInt(0);
+            if (firstIteration) {
+                n = new GridLayoutCombination();
+                n.id = cur.getInt(cur.getColumnIndex("id"));
+                n.tags.add(n.tags.size(),cur.getInt(cur.getColumnIndex("tag")));
+                n.Name = cur.getString(3);
+                firstIteration = false;
+            }
+            else if (currentID == previousID )
+            {
+                n.tags.add(n.tags.size(),cur.getInt(cur.getColumnIndex("tag")));
+            }
+            else
+            {
+                lst.add(n);
+                previousID = currentID;
+                firstIteration = true;
+                cur.moveToPrevious();
+                continue;
+            }
+        } while (cur.moveToNext());
 
-    public void getAllNotes(ArrayList<GridLayoutSave> lst)
+        cur.moveToPrevious();
+        if (cur.getInt(0) == getMaxIdForLayoutCombination())
+        {
+            lst.add(n); //колхоз
+        }
+    cur.close();
+}
+
+    @SuppressLint("Range")
+    public void getAllImageStates(ArrayList<StateClass> lst)
     {
         SQLiteDatabase db = getReadableDatabase();
-        String sql = "SELECT id, savedLayout, text FROM GridLayouts;";
+        String sql = "SELECT id, tagPosition, tag, name FROM SavedImages ORDER By id ASC, tagPosition ASC;";
         Cursor cur = db.rawQuery(sql,null);
-        if(cur.moveToFirst() == true){
-            do {
-                GridLayoutSave n = new GridLayoutSave();
-                n.id = cur.getInt(0);
-//                n.savedlayout = cur.getString(1);
-                n.Name = cur.getString(2);
+        StateClass n = new StateClass();
+        cur.moveToPosition(0);
+        int currentID;
+        int previousID = cur.getInt(0);
+        boolean firstIteration = true;
+        do
+        {
+            currentID = cur.getInt(0);
+            if (firstIteration) {
+                n = new StateClass();
+                n.id = cur.getInt(cur.getColumnIndex("id"));
+
+                n.Name = cur.getString(3);
+                firstIteration = false;
+            }
+            else if (currentID == previousID )
+            {
+
+            }
+            else
+            {
                 lst.add(n);
-            } while (cur.moveToNext() == true);
+                previousID = currentID;
+                firstIteration = true;
+                cur.moveToPrevious();
+                continue;
+            }
+        } while (cur.moveToNext());
+
+        cur.moveToPrevious();
+        if (cur.getInt(0) == getMaxIdForLayoutCombination())
+        {
+            lst.add(n); //колхоз
         }
+        cur.close();
+    }
+
+    public void getAllNetworkSettings(ArrayList<NetworkSettings> lst)
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT id, Title, Address, Port FROM NetworkSettings;";
+        Cursor cur = db.rawQuery(sql,null);
+        if(cur.moveToFirst()){
+            do {
+                NetworkSettings n = new NetworkSettings();
+                n.id = cur.getInt(0);
+                n.Title = cur.getString(1);
+                n.Address = cur.getString(2);
+                n.Port = cur.getInt(3);
+                lst.add(n);
+            } while (cur.moveToNext());
+        }
+        cur.close();
     }
 
 
