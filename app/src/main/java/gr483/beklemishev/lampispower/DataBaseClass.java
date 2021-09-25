@@ -23,6 +23,9 @@ public class DataBaseClass extends SQLiteOpenHelper {
 
         sql = "CREATE TABLE NetworkSettings (id INT, title TXT, address TXT, port INT);";
         db.execSQL(sql);
+
+        sql = "CREATE TABLE SavedImages (id INT, colorPosition INT, color INT, name TXT);";
+        db.execSQL(sql);
     }
 
     public int getMaxIdForNetworkSettings()
@@ -55,6 +58,19 @@ public class DataBaseClass extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         String sql = "INSERT INTO NetworkSettings VALUES (" + sid + ", '" + title + "' ,'" + address + "', "+ port +");";
         db.execSQL(sql);
+    }
+
+    public void addGridImageStates (int id, int[] colors, String name)
+    {
+
+        String sid = String.valueOf(id);
+        int[] savedColors = colors;
+        SQLiteDatabase db = getWritableDatabase();
+        for (int i = 0; i < savedColors.length; i++)
+        {
+            String sql = "INSERT INTO SavedImages VALUES (" + sid + ","+ i +"," + savedColors[i] +" ,'" + name + "');";
+            db.execSQL(sql);
+        }
     }
 
     public void addGridLayoutCombination (int id, int[] tags, String name)

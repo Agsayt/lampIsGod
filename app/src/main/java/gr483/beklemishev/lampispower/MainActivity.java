@@ -134,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), "Сетка успешно сохранена!", Toast.LENGTH_LONG).show();
     }
 
+    @SuppressLint("SetTextI18n")
     private void LoadLayout(View view){
         View customLayout = getLayoutInflater().inflate(R.layout.dialog_loadnetworksettings, null);
         AlertDialog.Builder bld = new AlertDialog.Builder(this);
