@@ -20,4 +20,6 @@
     <string name="SaveName">Название:</string>
     <string name="SaveLayout">Сохранить сетку</string>
     <string name="LoadLayout">Загрузить сетку</string>
+    <string name="ImageName">Название картинки:</string>
+    <string name="ImagePreview">Предпросмотр картинки</string>
 </resources>

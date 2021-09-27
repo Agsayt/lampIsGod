@@ -1,12 +1,15 @@
 package gr483.beklemishev.lampispower;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -107,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
 
         layForGrid.addView(gl);
 
-        FillGrid(gridWidth,gridWidth);
+        FillGrid(gridWidth,gridWidth, gl, addedButtons);
 
         try {
             socket = new DatagramSocket(null);
@@ -121,13 +124,6 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setLoadsImagesAutomatically(true);
         webView.loadUrl("http://node00.ddns.net:8080/flow/recv.html");
         webView.setInitialScale(500);
-
-        webView.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        }, 1000);
 
         mainLay.addView(webView);
     }
@@ -174,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void FillGrid(int width, int height) {
+    private void FillGrid(int width, int height, GridLayout gl, List<Button> addedButtons) {
         addedButtons.clear();
         int size = width * height;
         for (int i = 0; i < size; i++)
@@ -514,6 +510,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
@@ -576,7 +573,7 @@ public class MainActivity extends AppCompatActivity {
                         gl.removeAllViews();
                         gl.setColumnCount(gridWidth);
                         gl.setRowCount(gridHeight);
-                        FillGrid(gridWidth,gridHeight);
+                        FillGrid(gridWidth,gridHeight, gl, addedButtons);
                     }
                 });
                 cancel.setOnClickListener(new View.OnClickListener() {
@@ -586,9 +583,86 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
+            case R.id.Save: {
+                final View customLayout = getLayoutInflater().inflate(R.layout.dialog_imagesave, null);
+                AlertDialog.Builder bld = new AlertDialog.Builder(this);
+                bld.setTitle("Настройки подключения!");
+                bld.setView(customLayout);
+
+                LinearLayout preview = customLayout.findViewById(R.id.previewGridSave);
+                EditText imageName = customLayout.findViewById(R.id.etImageNameToSave);
+
+                Button save = customLayout.findViewById(R.id.bSaveImage);
+                Button cancel = customLayout.findViewById(R.id.bCancelImageSave);
+
+                Dialog dlg = bld.create();
+                dlg.show();
+
+                GridLayout prevGrid = new GridLayout(getApplicationContext());
+                prevGrid.setRowCount(gridHeight);
+                prevGrid.setColumnCount(gridWidth);
+                List<Button> prevButtonsList = new ArrayList<>();
+                FillGrid(gridWidth, gridHeight, prevGrid, prevButtonsList);
+                for (int i = 0; i < prevButtonsList.size(); i++) {
+                    prevButtonsList.get(i).setEnabled(false);
+                    prevButtonsList.get(i).setTag(addedButtons.get(i).getTag());
+                    prevButtonsList.get(i).setText(addedButtons.get(i).getText());
+                    ColorDrawable viewColor = (ColorDrawable) addedButtons.get(i).getBackground();
+                    int colorId = viewColor.getColor();
+                    prevButtonsList.get(i).setBackgroundColor(colorId);
+                }
+                preview.addView(prevGrid);
+
+                save.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        int[] buffer = new int[prevGrid.getColumnCount() * prevGrid.getRowCount()];
+                        for (int i = 0; i < prevButtonsList.size(); i++) {
+                            ColorDrawable viewColor = (ColorDrawable) prevButtonsList.get(i).getBackground();
+                            int colorId = viewColor.getColor();
+                            buffer[i] = colorId;
+                        }
+                        int nid = StaticDb.database.getMaxIdForSavedImages() + 1;
+                        StaticDb.database.addImage(nid, buffer, imageName.getText().toString());
+
+                        Toast.makeText(getApplicationContext(), "Изображение успешно сохранено!", Toast.LENGTH_LONG).show();
+                        dlg.cancel();
+                    }
+                });
+
+                cancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        dlg.cancel();
+                    }
+                });
+            }
+            break;
+            case R.id.Load: {
+                Intent i = new Intent(this, StateActivity.class);
+                startActivityForResult(i, 1);
+            }
+            break;
+
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == RESULT_OK && data != null)
+        {
+            StateClass receivedState = (StateClass) data.getSerializableExtra("state");
+
+            for (int i = 0; i < addedButtons.size(); i++) {
+                int color = receivedState.colors.get(i);
+                addedButtons.get(i).setBackgroundColor(color);
+                PacketForming(addedButtons.get(i), Color.red(color), Color.green(color), Color.blue(color));
+            }
+
+        }
     }
 
     private void OnNetworkSettingsLoad(View view, String load, EditText address, EditText port) {

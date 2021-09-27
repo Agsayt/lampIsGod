@@ -52,6 +52,20 @@ public class DataBaseClass extends SQLiteOpenHelper {
         return 0;
     }
 
+    public int getMaxIdForSavedImages()
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT Max(id) FROM SavedImages;";
+        Cursor cur = db.rawQuery(sql, null);
+        if(cur.moveToFirst()) {
+            int buffer = cur.getInt(0);
+            cur.close();
+            return buffer;
+        }
+        cur.close();
+        return 0;
+    }
+
     public void addNetworkSettingsSave (int id, String title, String address, int port)
     {
         String sid = String.valueOf(id);
@@ -60,7 +74,7 @@ public class DataBaseClass extends SQLiteOpenHelper {
         db.execSQL(sql);
     }
 
-    public void addGridImageStates (int id, int[] colors, String name)
+    public void addImage (int id, int[] colors, String name)
     {
 
         String sid = String.valueOf(id);
@@ -157,7 +171,7 @@ public void getAllGridLayoutCombinations(ArrayList<GridLayoutCombination> lst)
     public void getAllImageStates(ArrayList<StateClass> lst)
     {
         SQLiteDatabase db = getReadableDatabase();
-        String sql = "SELECT id, tagPosition, tag, name FROM SavedImages ORDER By id ASC, tagPosition ASC;";
+        String sql = "SELECT id, colorPosition, color, name FROM SavedImages ORDER By id ASC, colorPosition ASC;";
         Cursor cur = db.rawQuery(sql,null);
         StateClass n = new StateClass();
         cur.moveToPosition(0);
@@ -170,13 +184,13 @@ public void getAllGridLayoutCombinations(ArrayList<GridLayoutCombination> lst)
             if (firstIteration) {
                 n = new StateClass();
                 n.id = cur.getInt(cur.getColumnIndex("id"));
-
+                n.colors.add(cur.getInt(cur.getColumnIndex("color")));
                 n.Name = cur.getString(3);
                 firstIteration = false;
             }
             else if (currentID == previousID )
             {
-
+                n.colors.add(cur.getInt(cur.getColumnIndex("color")));
             }
             else
             {

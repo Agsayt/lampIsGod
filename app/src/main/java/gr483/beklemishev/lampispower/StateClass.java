@@ -1,13 +1,13 @@
 package gr483.beklemishev.lampispower;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StateClass {
+public class StateClass implements Serializable {
     public int id;
     public List<Integer> colors = new ArrayList<>();
     public String Name;
-    public int image;
 
     @Override
     public String toString() {
