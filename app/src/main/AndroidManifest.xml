@@ -13,6 +13,9 @@
         android:theme="@style/Theme.LampIsPower"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".RealtimeImage"
+            android:exported="true" />
+        <activity
             android:name=".StateActivity"
             android:exported="true" />
         <activity

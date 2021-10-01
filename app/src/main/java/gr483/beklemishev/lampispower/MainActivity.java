@@ -643,7 +643,15 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(i, 1);
             }
             break;
-
+            case R.id.Live: {
+                Intent i = new Intent(this, RealtimeImage.class);
+                i.putExtra("width", gridWidth);
+                i.putExtra("height", gridHeight);
+                i.putExtra("address", destinationAddress);
+                i.putExtra("port", destinationPort);
+                startActivity(i);
+            }
+            break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -661,7 +669,6 @@ public class MainActivity extends AppCompatActivity {
                 addedButtons.get(i).setBackgroundColor(color);
                 PacketForming(addedButtons.get(i), Color.red(color), Color.green(color), Color.blue(color));
             }
-
         }
     }
 

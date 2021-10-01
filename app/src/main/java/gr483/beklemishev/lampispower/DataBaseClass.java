@@ -203,7 +203,7 @@ public void getAllGridLayoutCombinations(ArrayList<GridLayoutCombination> lst)
         } while (cur.moveToNext());
 
         cur.moveToPrevious();
-        if (cur.getInt(0) == getMaxIdForLayoutCombination())
+        if (cur.getInt(0) == getMaxIdForSavedImages())
         {
             lst.add(n); //колхоз
         }
