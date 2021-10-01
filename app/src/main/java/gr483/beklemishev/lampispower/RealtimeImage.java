@@ -19,6 +19,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -78,8 +79,8 @@ public class RealtimeImage extends AppCompatActivity {
         }
 
         try {
-            dsocket = new DatagramSocket(2001);
-        } catch (SocketException e) {
+            dsocket = new DatagramSocket(2000, InetAddress.getByName("0.0.0.0"));
+        } catch (SocketException | UnknownHostException e) {
             e.printStackTrace();
         }
 
@@ -102,6 +103,7 @@ public class RealtimeImage extends AppCompatActivity {
                         message[1] = i++;
                         DatagramPacket packet = new DatagramPacket(message, message.length, address, destinationPort);
                         socket.send(packet);
+                        Log.i("SEND", "Sending: " + message);
                         if (i > 15)
                             break;
                     }
@@ -119,69 +121,44 @@ public class RealtimeImage extends AppCompatActivity {
             @Override
             public void run() {
 
-                int port = 11000;
-
-                DatagramSocket dsocket = null;
-                try {
-                    dsocket = new DatagramSocket(port);
-                } catch (SocketException e) {
-                    e.printStackTrace();
-                }
-
-
 
                 byte[] buffer = new byte[2048];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
+                try {
+                    //Keep a socket open to listen to all the UDP trafic that is destined for this port
+                    socket.setBroadcast(true);
+                    while (true) {
 
+                        //Receive a packet
+                        socket.receive(packet);  //<<<<<<<<<<<< This is where it hangs
 
-                while (true) {
+                        //Packet received
+                        Log.i("TEST" ,"Packet received from: " + packet.getData());
 
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                addedButtons.get(packet.getData()[0]).setBackgroundColor(Color.rgb(packet.getData()[1], packet.getData()[2], packet.getData()[3]));
+                            }
+                        });
 
-
-                    try {
-                        dsocket.receive(packet);
-                        Log.i("Here", "dsssssss");
-                    } catch (IOException e) {
-                        Log.i("Here", "dsssssss");
-                        e.printStackTrace();
                     }
-
-                    Log.i("Here", "dsssssss");
-
-                    String lText = new String(buffer, 0, packet.getLength());
-                    Log.i("UDP packet received", lText);
-                    Toast.makeText(getApplicationContext(), "1111", Toast.LENGTH_SHORT).show();
-
-
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            addedButtons.get(0).setBackgroundColor(Color.rgb(255, 0, 0));
-                            addedButtons.get(0).invalidate();
-                        }
-                    });
-
-                    packet.setLength(buffer.length);
-
-
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        continue;
-                    }
+                }
+                catch (IOException e) {
+                    Log.i("ERROR", "Receiving stopped!");
+                    socket.close();
                 }
 
 
             }
-
         };
 
         Thread thread = new Thread(run);
         thread.start();
     }
+
+
 
     @Override
     protected void onResume() {
