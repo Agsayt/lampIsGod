@@ -391,13 +391,13 @@ public class RealtimeImage extends AppCompatActivity {
                 play.setVisible(false);
                 pause.setVisible(true);
 
-
                     resumeTimers();
                     item.setIcon(getResources().getDrawable(android.R.drawable.ic_media_play));
 
             }
             break;
             case R.id.pause:{
+
                 pause.setVisible(false);
                 play.setVisible(true);
                 stopTimers();
