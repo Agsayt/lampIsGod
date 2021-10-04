@@ -24,4 +24,9 @@
     <string name="ImagePreview">Предпросмотр картинки</string>
     <string name="Live">Live</string>
     <string name="Gallery">Галерея</string>
+    <string name="SendPerion">Период передачи:</string>
+    <string name="ReceivePerion">Период приёма:</string>
+    <string name="PlayPause">Играть/Пауза</string>
+    <string name="Play">Играть</string>
+    <string name="Pause">Пауза</string>
 </resources>

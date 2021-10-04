@@ -3,6 +3,17 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/play"
+        android:contentDescription="0"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="@string/Play"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/pause"
+        android:icon="@android:drawable/ic_media_pause"
+        android:title="@string/Pause"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/Save"
         android:icon="@android:drawable/ic_menu_save"
         android:title="@string/Save"

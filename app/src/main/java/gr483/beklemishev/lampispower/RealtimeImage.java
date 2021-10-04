@@ -11,12 +11,13 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
@@ -24,7 +25,6 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -44,6 +44,12 @@ public class RealtimeImage extends AppCompatActivity {
     int destinationPort;
     String destinationAddress;
 
+    int receivePeriod = 5000;
+    int sendPeriod = 1000;
+
+    boolean sendingOnRun = true;
+    boolean receivingOnRun = true;
+
     GridLayout gl;
     LinearLayout layForGrid;
     DatagramSocket socket;
@@ -54,13 +60,8 @@ public class RealtimeImage extends AppCompatActivity {
 
     private List<Button> addedButtons = new ArrayList<>();
     private int[] tag = new int[16];
-    private Handler handler = new Handler();
-    private TimerTask timerTask;
     private Timer timer;
-    Thread receiveThread;
-    private TimerTask timerTask2;
     private Timer timer2;
-    private Handler handler2 = new Handler();
 
 
     @Override
@@ -101,50 +102,104 @@ public class RealtimeImage extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        EditText send = findViewById(R.id.etSend);
+        EditText receive = findViewById(R.id.etReceive);
 
-        ReceivePacket();
-        startTimer();
+        send.setText(String.valueOf(sendPeriod));
+        receive.setText(String.valueOf(receivePeriod));
 
-    }
+        send.addTextChangedListener(new TextWatcher() {
 
-    private void SendPackets() {
-        Runnable run = new Runnable() {
-            @Override
-            public void run() {
+                @Override
+                public void beforeTextChanged (CharSequence charSequence,int i, int i1, int i2){
 
-                byte[] message = new byte[2];
-
-                try{
-                    InetAddress address = InetAddress.getByName(destinationAddress);
-                    byte i = 0;
-                    while (i < 15){
-                        message[0] = 1;
-                        message[1] = i++;
-                        DatagramPacket packet = new DatagramPacket(message, message.length, address, destinationPort);
-                        socket.send(packet);
-                        Log.i("SEND", "Sending: " + message + "to btn " + i);
-                    }
-                }
-                catch (Exception e) {
-                    Log.i("EXCEPTION", e.getLocalizedMessage());
-                    }
-                finally
-                {
-                    Log.i("Sending", "Cycle stopped!");
-                }
             }
-        };
 
-        Thread secondaryThread = new Thread(run);
-        secondaryThread.start();
+                @Override
+                public void onTextChanged (CharSequence charSequence,int i, int i1, int i2){
+
+            }
+
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                    sendingOnRun = false;
+
+                    if(timer != null)
+                        timer.cancel();
+
+                    sendPeriod = Integer.parseInt(editable.toString());
+                    startSending();
+            }
+        });
+        receive.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+                receivingOnRun = false;
+
+                if(timer2 != null)
+                    timer2.cancel();
+
+                receivePeriod = Integer.parseInt(editable.toString());
+                startReceiving();
+            }
+        });
+
+        WebView webView = findViewById(R.id.webViewLive);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setUseWideViewPort(true);
+        webView.getSettings().setLoadsImagesAutomatically(true);
+        webView.loadUrl("http://node00.ddns.net:8080/flow/recv.html");
+        webView.setInitialScale(500);
+
+
+
     }
 
-    private void ReceivePacket() {
-        Runnable run = new Runnable() {
+    public void stopTimers(){
+        if (timer != null) {
+            sendingOnRun = false;
+            timer.cancel();
+        }
+
+        if (timer2 != null)
+        {
+            receivingOnRun = false;
+            timer2.cancel();
+        }
+    }
+
+    public void resumeTimers(){
+        startReceiving();
+        startSending();
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startSending();
+        startReceiving();
+    }
+
+    public void startReceiving(){
+        timer2 = new Timer();
+        receivingOnRun = true;
+
+        timer2.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-
-
                 byte[] buffer = new byte[4];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 List<byte[]> colorList = new ArrayList<>();
@@ -152,7 +207,7 @@ public class RealtimeImage extends AppCompatActivity {
                 try {
 
                     socket.setBroadcast(true);
-                    while (true) {
+                    while (receivingOnRun) {
 
 
                         socket.receive(packet);
@@ -197,30 +252,15 @@ public class RealtimeImage extends AppCompatActivity {
                     socket.close();
                 }
                 finally {
-                    Log.i("ERROR", "Receiving stopped!");
-                    socket.close();
                 }
             }
-        };
+        }, 100, receivePeriod);
 
-        receiveThread = new Thread(run);
-        receiveThread.start();
     }
 
-
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-
-        startTimer();
-    }
-
-    public void startTimer() {
+    public void startSending() {
         timer = new Timer();
-
-        initializeTimerTask();
+        receivingOnRun = true;
 
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -243,35 +283,13 @@ public class RealtimeImage extends AppCompatActivity {
                 catch (Exception e) {
                     Log.i("EXCEPTION", e.getLocalizedMessage());
                 }
-                finally
-                {
-
-                }
             }
-        }, 1000, 5000); //
+        }, 100, sendPeriod); //
+
+
 
     }
 
-    public void stoptimertask(View v) {
-        //stop the timer, if it's not already null
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-        }
-    }
-
-    public void initializeTimerTask() {
-
-        timerTask = new TimerTask() {
-            public void run() {
-                    handler.post(new Runnable() {
-                    public void run() {
-
-                    }
-                });
-            }
-        };
-    }
 
     private void FillGrid(int width, int height, GridLayout gl, List<Button> addedButtons) {
         addedButtons.clear();
@@ -294,8 +312,13 @@ public class RealtimeImage extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
 //        return super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu2, menu);
+        play = menu.findItem(R.id.play);
+        pause = menu.findItem(R.id.pause);
+
         return true;
     }
+
+    MenuItem play, pause;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -362,6 +385,23 @@ public class RealtimeImage extends AppCompatActivity {
                 Intent i = new Intent(this, StateActivity.class);
                 i.putExtra("mode", "gallery");
                 startActivityForResult(i, 1);
+            }
+            break;
+            case R.id.play: {
+                play.setVisible(false);
+                pause.setVisible(true);
+
+
+                    resumeTimers();
+                    item.setIcon(getResources().getDrawable(android.R.drawable.ic_media_play));
+
+            }
+            break;
+            case R.id.pause:{
+                pause.setVisible(false);
+                play.setVisible(true);
+                stopTimers();
+                item.setIcon(getResources().getDrawable(android.R.drawable.ic_media_pause));
             }
             break;
 
