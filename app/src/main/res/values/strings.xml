@@ -23,4 +23,5 @@
     <string name="ImageName">Название картинки:</string>
     <string name="ImagePreview">Предпросмотр картинки</string>
     <string name="Live">Live</string>
+    <string name="Gallery">Галерея</string>
 </resources>

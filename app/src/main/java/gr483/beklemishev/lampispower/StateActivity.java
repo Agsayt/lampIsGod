@@ -15,6 +15,7 @@ public class StateActivity extends AppCompatActivity {
 
     ListView imagesList;
     ArrayList<StateClass> lstState = new ArrayList<StateClass>();
+    String mode = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +24,7 @@ public class StateActivity extends AppCompatActivity {
 
         Intent i = getIntent();
 
+        mode = i.getStringExtra("mode");
 
         lstState.clear();
         StaticDb.database.getAllImageStates(lstState);
@@ -35,13 +37,25 @@ public class StateActivity extends AppCompatActivity {
         imagesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent intent = new Intent();
+                if (mode != "gallery"){
+                    Intent intent = new Intent();
 
-                StateClass state = (StateClass) customAdapter.getItem(i);
-                intent.putExtra("state", state);
+                    StateClass state = (StateClass) customAdapter.getItem(i);
+                    intent.putExtra("state", state);
 
-                setResult(RESULT_OK, intent);
+                    setResult(RESULT_OK, intent);
+                }
+
                 finish();
+            }
+        });
+
+        imagesList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                customAdapter.deleteItem(i);
+                customAdapter.notifyDataSetChanged();
+                return true;
             }
         });
     }

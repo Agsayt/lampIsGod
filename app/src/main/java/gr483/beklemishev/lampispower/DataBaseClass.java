@@ -100,30 +100,16 @@ public class DataBaseClass extends SQLiteOpenHelper {
         }
     }
 
-//    public void updateNote(int id, String text)
-//    {
-//        String sid = String.valueOf(id);
-//        SQLiteDatabase db = getWritableDatabase();
-//        String sql = "UPDATE notes SET text = '"+ text + "' Where id = " + sid + ";";
-//        db.execSQL(sql);
-//    }
 
-    public void deleteGridLayoutCombination(int sid)
+
+    public void deleteImage(int sid)
     {
-        String sql = "DELETE FROM GridLayoutsCombination WHERE id = '"+ sid +"';";
+        String sql = "DELETE FROM SavedImages WHERE id = '"+ sid +"';";
         SQLiteDatabase db = getReadableDatabase();
         db.execSQL(sql);
     }
 
-//    public String getNote (int id)
-//    {
-//        String sid = String.valueOf(id);
-//        SQLiteDatabase db = getReadableDatabase();
-//        String sql = "SELECT text FROM notes WHERE id = " + sid + ";";
-//        Cursor cur = db.rawQuery(sql, null);
-//        if (cur.moveToFirst() == true) return cur.getString(0);
-//        return "";
-//    }
+
 @SuppressLint("Range")
 public void getAllGridLayoutCombinations(ArrayList<GridLayoutCombination> lst)
 {

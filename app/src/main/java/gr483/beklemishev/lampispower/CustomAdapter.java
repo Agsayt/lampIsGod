@@ -42,6 +42,11 @@ public class CustomAdapter extends BaseAdapter {
         return 0;
     }
 
+    public void deleteItem(int i){
+        StaticDb.database.deleteImage(state.get(i).id);
+        state.remove(i);
+    }
+
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         view = inflter.inflate(R.layout.state_listview, null);
@@ -54,7 +59,6 @@ public class CustomAdapter extends BaseAdapter {
 
         gl.setColumnCount(4);
         gl.setRowCount(4);
-
 
 
         List<Button> addedBtns = new ArrayList<>();

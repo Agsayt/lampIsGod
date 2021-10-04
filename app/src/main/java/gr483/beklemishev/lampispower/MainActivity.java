@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -28,6 +29,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -649,6 +651,14 @@ public class MainActivity extends AppCompatActivity {
                 i.putExtra("height", gridHeight);
                 i.putExtra("address", destinationAddress);
                 i.putExtra("port", destinationPort);
+
+                int[] buffer = new int[16];
+                for (int j = 0; j < 16; j++)
+                {
+                    buffer[j] = (int) addedButtons.get(j).getTag();
+                }
+
+                i.putExtra("buttons", (Serializable) buffer);
                 startActivity(i);
             }
             break;
